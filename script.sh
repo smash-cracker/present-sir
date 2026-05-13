@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 
-EMAIL="x@gmail.com"
-PASSWORD="y"
+EMAIL="$1"
+PASSWORD="$2"
 
 BASE_URL="https://archeios.cezentech.com"
+
+if [ -z "$EMAIL" ] || [ -z "$PASSWORD" ]; then
+  echo "Usage:"
+  echo "./attendance.sh <email> <password>"
+  exit 1
+fi
 
 LOGIN_RESPONSE=$(
   curl -s -X POST "$BASE_URL/api/login" \
