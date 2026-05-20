@@ -1,6 +1,6 @@
 ### How to use
 
-`./present-linux "your_email" "your_password"`
+`./present "your_email" "your_password"`
 
 ### How to add crontab
 
