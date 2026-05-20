@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 EMAIL="$1"
 PASSWORD="$2"
@@ -10,6 +10,17 @@ if [ -z "$EMAIL" ] || [ -z "$PASSWORD" ]; then
   echo "./attendance.sh <email> <password>"
   exit 1
 fi
+
+# Check dependencies
+command -v jq >/dev/null 2>&1 || {
+  echo "jq is required but not installed."
+  exit 1
+}
+
+command -v notify-send >/dev/null 2>&1 || {
+  echo "notify-send is required but not installed."
+  exit 1
+}
 
 # Current date in DD-MM-YY format
 TODAY=$(date +"%d-%m-%y")
@@ -34,10 +45,11 @@ HOLIDAYS=(
   "25-12-26" # CHRISTMAS DAY
 )
 
-# Skip weekends
+# Skip Sundays
 DAY_OF_WEEK=$(date +%u)
 if [ "$DAY_OF_WEEK" -eq 7 ]; then
   echo "Today is Sunday. Skipping attendance."
+  notify-send "Attendance" "Skipped: Sunday"
   exit 0
 fi
 
@@ -45,6 +57,7 @@ fi
 for HOLIDAY in "${HOLIDAYS[@]}"; do
   if [ "$TODAY" = "$HOLIDAY" ]; then
     echo "Today ($TODAY) is a holiday. Skipping attendance."
+    notify-send "Attendance" "Skipped: Holiday ($TODAY)"
     exit 0
   fi
 done
@@ -63,6 +76,8 @@ TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.token')
 if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
   echo "Login failed"
   echo "$LOGIN_RESPONSE"
+
+  notify-send "Attendance Failed" "Login failed"
   exit 1
 fi
 
@@ -73,4 +88,16 @@ ATTENDANCE_RESPONSE=$(
     -d '{}'
 )
 
+SUCCESS=$(echo "$ATTENDANCE_RESPONSE" | jq -r '.success // empty')
+MESSAGE=$(echo "$ATTENDANCE_RESPONSE" | jq -r '.message // empty')
+
 echo "$ATTENDANCE_RESPONSE"
+
+if [ "$MESSAGE" = "Attendance already marked for today" ]; then
+  exit 0
+elif [ "$SUCCESS" = "true" ]; then
+  notify-send "Attendance Success" "Attendance marked successfully"
+else
+  MESSAGE=$(echo "$ATTENDANCE_RESPONSE" | jq -r '.message // "Attendance marking failed"')
+  notify-send "Attendance Failed" "$MESSAGE"
+fi
