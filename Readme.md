@@ -1,5 +1,7 @@
 ### How to use
-`sudo chmod +x ./present-linux`
+`go build -o present-linux script.go`
+
+`chmod +x ./present-linux`
 
 `./present-linux "your_email" "your_password"`
 
@@ -11,4 +13,4 @@
 
 ### How to build
 
-`pyinstaller --onefile --hidden-import=requests present.py`
+`go build -o present-linux script.go`
